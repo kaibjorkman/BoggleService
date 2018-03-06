@@ -426,5 +426,10 @@ namespace SSGui
                 Invalidate();
             }
         }
+
+        private void SpreadsheetPanel_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

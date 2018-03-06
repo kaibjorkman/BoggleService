@@ -71,6 +71,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controller.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="SpreadsheetDemo.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -53,5 +53,9 @@ namespace SSGui
             Close();
         }
 
+        private void SpreadsheetDemo_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

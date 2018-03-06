@@ -28,8 +28,17 @@
         /// </summary>
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
+            this.SuspendLayout();
+            // 
+            // SpreadsheetPanel
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Name = "SpreadsheetPanel";
+            this.Size = new System.Drawing.Size(537, 602);
+            this.Load += new System.EventHandler(this.SpreadsheetPanel_Load);
+            this.ResumeLayout(false);
+
         }
 
         #endregion
