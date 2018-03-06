@@ -473,6 +473,8 @@ namespace SS
                 writer.WriteEndElement();
                 writer.WriteEndDocument();
             }
+
+            Changed = false;
         }
 
         // ADDED FOR PS6
