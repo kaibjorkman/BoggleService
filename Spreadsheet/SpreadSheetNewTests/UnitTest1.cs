@@ -142,17 +142,7 @@ namespace SpreadSheetNewTests
 
         }
 
-        /// <summary>
-        /// Tests the null formula in SetCellContents
-        /// </summary>
-        [TestMethod]
-        [ExpectedException(typeof(ArgumentNullException))]
-        public void TestMethod12()
-        {
-            AbstractSpreadsheet sheet = new Spreadsheet();
-            sheet.SetContentsOfCell("A1", "");
-        }
-
+       
         /// <summary>
         /// Tests the replacement when SetCellCOntents is called
         /// </summary>

@@ -356,7 +356,15 @@ namespace SS
 
                 // new cell
                 Cell cell = new Cell(formula);
-                cell.value = formula.Evaluate(Lookup);
+                try
+                {
+                    cell.value = formula.Evaluate(Lookup);
+                }
+
+                catch(FormulaFormatException)
+                {
+                    cell.value = new FormulaError();
+                }
 
                 if (cells.ContainsKey(name))    // if it already contains that key
                 {
@@ -591,7 +599,7 @@ namespace SS
                 all_dependents = new HashSet<String>(SetCellContents(name, content));
             }
 
-
+           
             // after changing cell content, set changed to true
             Changed = true;
 
@@ -602,9 +610,15 @@ namespace SS
         {
             Cell cell;
             Double result;
+            
             if(cells.TryGetValue(variable, out cell))
             {
+                if (cell.value.ToString() == "")
+                {
+                    throw VariableNotFoundException();
+                }
                 Double.TryParse(cell.value.ToString(), out result);
+                 
                 return result;
 ;           }
 
