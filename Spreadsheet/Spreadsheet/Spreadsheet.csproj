@@ -36,10 +36,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Dependencies\DependencyGraph.dll</HintPath>
     </Reference>
-    <Reference Include="Formula, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Dependencies\Formula.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -56,8 +52,6 @@
   <ItemGroup>
     <Content Include="Dependencies\DependencyGraph.dll" />
     <Content Include="Dependencies\DependencyGraph.pdb" />
-    <Content Include="Dependencies\Formula.dll" />
-    <Content Include="Dependencies\Formula.pdb" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Spreadsheet.xsd">
@@ -67,6 +61,12 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="SampleSavedSpreadsheet.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\spreadsheet\Spreadsheet\Formula\Formula.csproj">
+      <Project>{d43d998c-9797-4cf4-9bb0-6de22753849a}</Project>
+      <Name>Formula</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

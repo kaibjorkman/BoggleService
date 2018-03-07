@@ -296,7 +296,7 @@ namespace SS
             {
                 throw new InvalidNameException();
             }
-
+           
             //new cell
             Cell cell = new Cell(text);
             if (cells.ContainsKey(name))    // if it already contains that key
@@ -305,7 +305,10 @@ namespace SS
             }
             else
             {
-                cells.Add(name, cell);      // otherwise add a new key for that value
+                if (text.Count() > 0)
+                {
+                    cells.Add(name, cell);      // otherwise add a new key for that value
+                }
             }
             
             // replace the dependents of 'name' in the dependency graph with an empty hash set to make room for recalculation
@@ -355,17 +358,8 @@ namespace SS
                 HashSet<String> all_dependees = new HashSet<String>(GetCellsToRecalculate(name));
 
                 // new cell
-                Cell cell = new Cell(formula);
-                try
-                {
-                    cell.value = formula.Evaluate(Lookup);
-                }
-
-                catch(FormulaFormatException)
-                {
-                    cell.value = new FormulaError();
-                }
-
+                Cell cell = new Cell(formula, Lookup);
+               
                 if (cells.ContainsKey(name))    // if it already contains that key
                 {
                     cells[name] = cell;         // replace the key with the new value
@@ -377,7 +371,7 @@ namespace SS
 
                 return all_dependees;
             }
-            catch (CircularException e) // if an exception is caught, we want to keep the old dependents and not change the cell
+            catch (CircularException) // if an exception is caught, we want to keep the old dependents and not change the cell
             {
                 graph.ReplaceDependees(name, old_dependees);
 
@@ -553,12 +547,6 @@ namespace SS
                 throw new ArgumentNullException();
             }
 
-            //if contents is ""
-            if(content == "")
-            {
-               
-            }
-
             // the name of the cell we want to set can't be null, and must be a valid name
             if (ReferenceEquals(name, null) || !(IsValidName(name)))
             {
@@ -596,6 +584,7 @@ namespace SS
             }
             else // otherwise, the content is a string so just set the cell to that string
             {
+                
                 all_dependents = new HashSet<String>(SetCellContents(name, content));
             }
 
@@ -603,9 +592,23 @@ namespace SS
             // after changing cell content, set changed to true
             Changed = true;
 
+            // for each dependent, re-evaluate it based on the new dependee value
+            foreach (string s in all_dependents)
+            {
+                Cell cell_value; // value associated with key
+                // try to get the key, if we find it, re-evaluate it
+                if (cells.TryGetValue(s, out cell_value))
+                    cell_value.ReEvaluate(Lookup);
+            }
+
             return all_dependents;   // return list of all the dependees of the cell       
         }
 
+        /// <summary>
+        /// Defaut variable lookup deleagate
+        /// </summary>
+        /// <param name="variable"></param>
+        /// <returns></returns
         private double Lookup(string variable)
         {
             Cell cell;
@@ -615,7 +618,7 @@ namespace SS
             {
                 if (cell.value.ToString() == "")
                 {
-                    throw VariableNotFoundException();
+                    throw new FormulaEvaluationException("No value corresponding to variable");
                 }
                 Double.TryParse(cell.value.ToString(), out result);
                  
@@ -624,18 +627,11 @@ namespace SS
 
             else
             {
-                throw VariableNotFoundException();
+                throw new FormulaEvaluationException("No value corresponding to variable");
             }
         }
 
-        /// <summary>
-        /// thrown if a variable is 
-        /// </summary>
-        /// <returns></returns>
-        public static Exception VariableNotFoundException()
-        {
-            return VariableNotFoundException();
-        }
+        
 
         /// <summary>
         /// This class creates a cell object 
@@ -646,6 +642,9 @@ namespace SS
             public Object contents { get; set; }
             public Object value { get; set; }
 
+            // the data type of the contents and value
+            Object content;
+
             /// <summary>
             /// Constructor for strings
             /// </summary>
@@ -653,6 +652,7 @@ namespace SS
             {
                 contents = name;
                 value = name;
+                
             }
 
             /// <summary>
@@ -662,15 +662,56 @@ namespace SS
             {
                 contents = name;
                 value = name;
+               
             }
 
             /// <summary>
             /// Constructor for Formulas
             /// </summary>
-            public Cell(Formula name)
+            public Cell(Formula name, Formulas.Lookup lookup)
             {
                 contents = name;
+                try
+                {
+                    value = name.Evaluate(lookup);
+                }
                 
+                catch(Exception ex)
+                {
+                    if (ex is FormulaEvaluationException || ex is FormatException)
+                    {
+                        value = new FormulaError();
+                        return;
+                    }
+
+                    throw;
+                }
+               
+
+            }
+
+            /// <summary>
+            ///     Helper method for re-evaluating formulas when their dependees 
+            ///     are changed. Used in the SetContentsOfCell method. This 
+            ///     method should only be used on cells that have a Formula as
+            ///     their contents. 
+            /// </summary>
+            /// <param name="lookup">Lookup delegate for value</param>
+            public void ReEvaluate(Formulas.Lookup lookup)
+            {
+                if (contents is Formula)
+                {
+                    Formula same = (Formula)contents;
+                    
+                    try
+                    {
+                        value = same.Evaluate(lookup);
+                    }
+                    catch(FormulaEvaluationException)
+                    {
+                        value = new FormulaError();
+                    }
+                }
             }
 
             /// <summary>
