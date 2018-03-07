@@ -21,5 +21,10 @@ namespace SpreadsheetGUI
         {
 
         }
+
+        private void spreadsheetPanel1_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }
