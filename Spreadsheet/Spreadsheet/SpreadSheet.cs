@@ -154,7 +154,16 @@ namespace SS
                             case "spreadsheet":
                                 try
                                 {
-                                    oldIsValid = new Regex(reader["IsValid"]); //set the old is valid statement for checking later
+                                    string temp = reader["IsValid"];
+
+                                    if (temp == null)
+                                    {
+                                        oldIsValid = new Regex("");
+                                    }
+                                    else
+                                    {
+                                        oldIsValid = new Regex(temp); //set the old is valid statement for checking later
+                                    }
                                 }
                                 catch(ArgumentException)
                                 {
@@ -468,7 +477,14 @@ namespace SS
                 {
                     writer.WriteStartElement("cell");
                     writer.WriteAttributeString("name", element);
-                    writer.WriteAttributeString("contents", cells[element].contents.ToString());
+                    if (cells[element].contents is Formula)
+                    {
+                        writer.WriteAttributeString("contents", "=" + cells[element].contents.ToString());
+                    }
+                    else
+                    {
+                        writer.WriteAttributeString("contents", cells[element].contents.ToString());
+                    }
                     writer.WriteEndElement();
                 }
 
@@ -707,9 +723,15 @@ namespace SS
                     {
                         value = same.Evaluate(lookup);
                     }
-                    catch(FormulaEvaluationException)
+                    catch (Exception ex)
                     {
-                        value = new FormulaError();
+                        if (ex is FormulaEvaluationException || ex is FormatException)
+                        {
+                            value = new FormulaError();
+                            return;
+                        }
+
+                        throw;
                     }
                 }
             }
