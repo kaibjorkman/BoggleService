@@ -1,6 +1,6 @@
 ﻿namespace SpreadsheetGUI
 {
-    partial class Form1
+    partial class SpreadsheetWIndow
     {
         /// <summary>
         /// Required designer variable.
@@ -30,13 +30,14 @@
         {
             this.spreadsheetPanel1 = new SSGui.SpreadsheetPanel();
             this.button1 = new System.Windows.Forms.Button();
+            this.spreadsheetPanel2 = new SSGui.SpreadsheetPanel();
             this.SuspendLayout();
             // 
             // spreadsheetPanel1
             // 
             this.spreadsheetPanel1.Location = new System.Drawing.Point(12, -1);
             this.spreadsheetPanel1.Name = "spreadsheetPanel1";
-            this.spreadsheetPanel1.Size = new System.Drawing.Size(559, 606);
+            this.spreadsheetPanel1.Size = new System.Drawing.Size(684, 606);
             this.spreadsheetPanel1.TabIndex = 0;
             this.spreadsheetPanel1.Load += new System.EventHandler(this.spreadsheetPanel1_Load);
             // 
@@ -49,11 +50,19 @@
             this.button1.Text = "button1";
             this.button1.UseVisualStyleBackColor = true;
             // 
+            // spreadsheetPanel2
+            // 
+            this.spreadsheetPanel2.Location = new System.Drawing.Point(68, 72);
+            this.spreadsheetPanel2.Name = "spreadsheetPanel2";
+            this.spreadsheetPanel2.Size = new System.Drawing.Size(537, 602);
+            this.spreadsheetPanel2.TabIndex = 2;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(795, 617);
+            this.Controls.Add(this.spreadsheetPanel2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.spreadsheetPanel1);
             this.Name = "Form1";
@@ -67,6 +76,7 @@
 
         private SSGui.SpreadsheetPanel spreadsheetPanel1;
         private System.Windows.Forms.Button button1;
+        private SSGui.SpreadsheetPanel spreadsheetPanel2;
     }
 }
 
