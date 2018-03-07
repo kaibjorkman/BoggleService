@@ -540,9 +540,15 @@ namespace SS
         public override ISet<string> SetContentsOfCell(string name, string content)
         {
             // the content we want to set in a cell can't be null
-            if (ReferenceEquals(content, null) || content == "")
+            if (ReferenceEquals(content, null))
             {
                 throw new ArgumentNullException();
+            }
+
+            //if contents is ""
+            if(content == "")
+            {
+               
             }
 
             // the name of the cell we want to set can't be null, and must be a valid name
