@@ -28,46 +28,22 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.spreadsheetPanel1 = new SSGui.SpreadsheetPanel();
-            this.button1 = new System.Windows.Forms.Button();
-            this.spreadsheetPanel2 = new SSGui.SpreadsheetPanel();
+            this.spreadsheetPanel3 = new SSGui.SpreadsheetPanel();
             this.SuspendLayout();
             // 
-            // spreadsheetPanel1
+            // spreadsheetPanel3
             // 
-            this.spreadsheetPanel1.Location = new System.Drawing.Point(12, -1);
-            this.spreadsheetPanel1.Name = "spreadsheetPanel1";
-            this.spreadsheetPanel1.Size = new System.Drawing.Size(684, 606);
-            this.spreadsheetPanel1.TabIndex = 0;
-            this.spreadsheetPanel1.Load += new System.EventHandler(this.spreadsheetPanel1_Load);
+            this.spreadsheetPanel3.Location = new System.Drawing.Point(12, 12);
+            this.spreadsheetPanel3.Name = "spreadsheetPanel3";
+            this.spreadsheetPanel3.Size = new System.Drawing.Size(1251, 611);
+            this.spreadsheetPanel3.TabIndex = 0;
             // 
-            // button1
+            // SpreadsheetWIndow
             // 
-            this.button1.Location = new System.Drawing.Point(702, 233);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(81, 59);
-            this.button1.TabIndex = 1;
-            this.button1.Text = "button1";
-            this.button1.UseVisualStyleBackColor = true;
-            // 
-            // spreadsheetPanel2
-            // 
-            this.spreadsheetPanel2.Location = new System.Drawing.Point(68, 72);
-            this.spreadsheetPanel2.Name = "spreadsheetPanel2";
-            this.spreadsheetPanel2.Size = new System.Drawing.Size(537, 602);
-            this.spreadsheetPanel2.TabIndex = 2;
-            // 
-            // Form1
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(795, 617);
-            this.Controls.Add(this.spreadsheetPanel2);
-            this.Controls.Add(this.button1);
-            this.Controls.Add(this.spreadsheetPanel1);
-            this.Name = "Form1";
-            this.Text = "Form1";
-            this.Load += new System.EventHandler(this.Form1_Load);
+            this.ClientSize = new System.Drawing.Size(1251, 618);
+            this.Controls.Add(this.spreadsheetPanel3);
+            this.Name = "SpreadsheetWIndow";
+            this.Load += new System.EventHandler(this.SpreadsheetWIndow_Load);
             this.ResumeLayout(false);
 
         }
@@ -77,6 +53,7 @@
         private SSGui.SpreadsheetPanel spreadsheetPanel1;
         private System.Windows.Forms.Button button1;
         private SSGui.SpreadsheetPanel spreadsheetPanel2;
+        private SSGui.SpreadsheetPanel spreadsheetPanel3;
     }
 }
 
