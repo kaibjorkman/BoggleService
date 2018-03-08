@@ -109,6 +109,12 @@
   <ItemGroup>
     <Folder Include="bin\Debug\" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\spreadsheet\Spreadsheet\Spreadsheet\Spreadsheet.csproj">
+      <Project>{9025a594-df2a-4e6a-b8c2-f087ecc3e203}</Project>
+      <Name>Spreadsheet</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -8,5 +8,10 @@ namespace SpreadsheetGUI
 {
     interface ISpreadsheetView
     {
+        event Action ArrowKeyLeft;
+
+        void SetSelection();
+
+        void GetSelection();
     }
 }

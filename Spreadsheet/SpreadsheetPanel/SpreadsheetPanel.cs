@@ -122,6 +122,17 @@ namespace SSGui
         }
 
         /// <summary>
+        /// Blocks this SpreadsheetPanel from giving special interpretations to certain
+        /// keys, such as the arrow keys and the tab key.
+        /// </summary>
+        /// <param name="keyData"></param>
+        /// <returns></returns>
+        protected override bool IsInputKey(Keys keyData)
+        {
+            return true;
+        }
+
+        /// <summary>
         /// When the SpreadsheetPanel is resized, we set the size and locations of the three
         /// components that make it up.
         /// </summary>

@@ -32,10 +32,11 @@
             // 
             // SpreadsheetPanel
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "SpreadsheetPanel";
-            this.Size = new System.Drawing.Size(537, 602);
+            this.Size = new System.Drawing.Size(403, 482);
             this.Load += new System.EventHandler(this.SpreadsheetPanel_Load);
             this.ResumeLayout(false);
 

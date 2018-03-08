@@ -32,12 +32,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DependencyGraph">
-      <HintPath>..\..\..\spreadsheet\Spreadsheet\Spreadsheet\Dependencies\DependencyGraph.dll</HintPath>
-    </Reference>
-    <Reference Include="Formula">
-      <HintPath>..\..\..\spreadsheet\Spreadsheet\Spreadsheet\Dependencies\Formula.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -53,17 +47,17 @@
   <ItemGroup>
     <Compile Include="Controller.cs" />
     <Compile Include="ISpreadsheetView.cs" />
-    <Compile Include="SpreadsheetWIndow.cs">
+    <Compile Include="SpreadsheetWindow.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="SpreadsheetWIndow.Designer.cs">
-      <DependentUpon>SpreadsheetWIndow.cs</DependentUpon>
+    <Compile Include="SpreadsheetWindow.Designer.cs">
+      <DependentUpon>SpreadsheetWindow.cs</DependentUpon>
     </Compile>
     <Compile Include="Launch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SpreadsheetApplicationContext.cs" />
-    <EmbeddedResource Include="SpreadsheetWIndow.resx">
-      <DependentUpon>SpreadsheetWIndow.cs</DependentUpon>
+    <EmbeddedResource Include="SpreadsheetWindow.resx">
+      <DependentUpon>SpreadsheetWindow.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -88,6 +82,14 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\spreadsheet\Spreadsheet\DependencyGraph\DependencyGraph.csproj">
+      <Project>{862ead85-346f-4d2b-a53c-98074ff813ba}</Project>
+      <Name>DependencyGraph</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\spreadsheet\Spreadsheet\Formula\Formula.csproj">
+      <Project>{d43d998c-9797-4cf4-9bb0-6de22753849a}</Project>
+      <Name>Formula</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\spreadsheet\Spreadsheet\Spreadsheet\Spreadsheet.csproj">
       <Project>{9025a594-df2a-4e6a-b8c2-f087ecc3e203}</Project>
       <Name>Spreadsheet</Name>

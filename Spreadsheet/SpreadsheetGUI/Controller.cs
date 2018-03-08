@@ -8,6 +8,20 @@ namespace SpreadsheetGUI
 {
     class Controller
     {
+        private SpreadsheetWindow window;
 
+        public Controller(SpreadsheetWindow window)
+        {
+            this.window = window;
+            window.ArrowKeyLeft += HandleArrowKeyLeft;
+        }
+
+
+        private void HandleArrowKeyLeft()
+        {
+            window.GetSelection(out int col, out int row);
+
+            window.SetSelection();
+        }
     }
 }
