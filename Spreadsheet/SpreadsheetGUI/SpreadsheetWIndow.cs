@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SSGui;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -13,6 +14,10 @@ namespace SpreadsheetGUI
     public partial class SpreadsheetWindow : Form, ISpreadsheetView
 
     {
+
+        
+
+       
         public SpreadsheetWindow()
         {
             InitializeComponent();
@@ -20,6 +25,21 @@ namespace SpreadsheetGUI
 
         //All events
         public event Action ArrowKeyLeft;
+        public event Action ArrowKeyRight;
+        public event Action ArrowKeyUp;
+        public event Action ArrowKeyDown;
+        public event Action<string> CellContentsChanged;
+
+        //Fields
+        public SpreadsheetPanel Panel
+        {
+            get { return spreadsheetPanel; }
+
+            set { spreadsheetPanel = value; }
+        }
+
+        
+        
 
         private void Form1_Load(object sender, EventArgs e)
         {
@@ -31,23 +51,10 @@ namespace SpreadsheetGUI
 
         }
 
-        /**
-        private void InitializeComponent()
-        {
-            this.SuspendLayout();
-            // 
-            // SpreadsheetWIndow
-            // 
-            this.ClientSize = new System.Drawing.Size(500, 700);
-            this.Name = "SpreadsheetWIndow";
-            this.Load += new System.EventHandler(this.SpreadsheetWIndow_Load);
-            this.ResumeLayout(false);
-
-        }
-    **/
+        
         private void SpreadsheetWIndow_Load(object sender, EventArgs e)
         {
-
+          
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
@@ -64,12 +71,35 @@ namespace SpreadsheetGUI
         /// <param name="e"></param>
         private void SpreadsheetWindow_KeyDown(object sender, KeyEventArgs e)
         {
-            if(e.KeyCode == Keys.Left)
+            
+            switch (e.KeyCode)
             {
-                ArrowKeyLeft?.Invoke();
+                case Keys.Left:
+                    ArrowKeyLeft();
+                    e.Handled = true;
+                    break;          
+                case Keys.Right:
+                    ArrowKeyRight();
+                    e.Handled = true;
+                    break;
+                case Keys.Up:
+                    ArrowKeyUp();
+                    e.Handled = true;
+                    break;
+                case Keys.Down:
+                    ArrowKeyDown();
+                    e.Handled = true;
+                    break;
+                   
             }
         }
 
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+            CellContentsChanged(textBox1.Text);
+        }
+    }
+
         
     }
-}
+

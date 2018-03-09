@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SSGui;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,10 +9,16 @@ namespace SpreadsheetGUI
 {
     interface ISpreadsheetView
     {
+        //Key Evenets
         event Action ArrowKeyLeft;
+        event Action ArrowKeyRight;
+        event Action ArrowKeyUp;
+        event Action ArrowKeyDown;
+        event Action<string> CellContentsChanged;
+        SpreadsheetPanel Panel { get; set; }
 
-        void SetSelection();
+       
 
-        void GetSelection();
     }
 }
+

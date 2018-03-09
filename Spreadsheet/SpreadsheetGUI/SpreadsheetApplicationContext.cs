@@ -45,6 +45,7 @@ namespace SpreadsheetGUI
         {
             // Create the window and the controller
             SpreadsheetWindow window = new SpreadsheetWindow();
+            
             new Controller(window);
 
             // One more form is running
