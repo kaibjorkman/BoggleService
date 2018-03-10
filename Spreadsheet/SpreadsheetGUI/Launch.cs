@@ -18,8 +18,8 @@ namespace SpreadsheetGUI
             Application.SetCompatibleTextRenderingDefault(false);
 
             // Get the application context and run one form inside it
-            var context = FileAnalysisApplicationContext.GetContext();
-            FileAnalysisApplicationContext.GetContext().RunNew();
+            var context = SpreadsheetApplicationContext.GetContext();
+            SpreadsheetApplicationContext.GetContext().RunNew();
             Application.Run(context);
         }
     }
