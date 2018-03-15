@@ -21,6 +21,7 @@ namespace BoggleClient
             new Controller(view);
 
             Application.Run(view);
+
         }
     }
 }
