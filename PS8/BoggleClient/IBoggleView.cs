@@ -11,7 +11,7 @@ namespace BoggleClient
         /// <summary>
         /// fires if a user tries to register for some boggle
         /// </summary>
-        event Action<string> RegisterUser;
+        event Action<string, string> RegisterUser;
 
         /// <summary>
         /// fires when a user trys to join a game
@@ -30,12 +30,18 @@ namespace BoggleClient
 
         event Action<string> EnterButtonPressed;
 
+        event Action LeavePressed;
+
         /// <summary>
         /// If state == true, enables all controls that are normally enabled; disables Cancel.
         /// If state == false, disables all controls; enables Cancel.
         /// </summary>
         void EnableControls(bool state);
 
+        /// <summary>
+        /// gets the word that the user entered
+        /// </summary>
+        /// <param name="word"></param>
         void newWord(string word);
 
         /// <summary>
@@ -53,8 +59,30 @@ namespace BoggleClient
         /// </summary>
         bool IsUserPending { get; set; }
 
+        /// <summary>
+        /// gets the board from the server
+        /// </summary>
+        /// <param name="board"></param>
         void startBoard(string board);
 
+        /// <summary>
+        /// gets the time and scores from the server
+        /// </summary>
+        /// <param name="time"></param>
+        /// <param name="scoreOne"></param>
+        /// <param name="scoreTwo"></param>
         void updateData(string time, string scoreOne, string scoreTwo);
+
+        /// <summary>
+        /// allows the controller to update player one's final word list
+        /// </summary>
+        /// <param name="word"></param>
+        void updateEndOne(string word);
+
+        /// <summary>
+        /// allows the controller to update player one's final word list
+        /// </summary>
+        /// <param name="word"></param>
+        void updateEndTwo(string word);
     }
 }

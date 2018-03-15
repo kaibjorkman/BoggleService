@@ -61,7 +61,6 @@
             this.player2 = new System.Windows.Forms.Label();
             this.currentList = new System.Windows.Forms.ListBox();
             this.finalWordsPlayer2 = new System.Windows.Forms.ListBox();
-            this.currentScore = new System.Windows.Forms.Label();
             this.label21 = new System.Windows.Forms.Label();
             this.label22 = new System.Windows.Forms.Label();
             this.totalScorePlayer1 = new System.Windows.Forms.Label();
@@ -72,12 +71,16 @@
             this.enterButton = new System.Windows.Forms.Button();
             this.timeLabel = new System.Windows.Forms.Label();
             this.timeLeft = new System.Windows.Forms.Label();
+            this.leaveButton = new System.Windows.Forms.Button();
+            this.label17 = new System.Windows.Forms.Label();
+            this.domainBox = new System.Windows.Forms.TextBox();
+            this.helpButton = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // nameBox
             // 
-            this.nameBox.Location = new System.Drawing.Point(396, 94);
+            this.nameBox.Location = new System.Drawing.Point(396, 115);
             this.nameBox.Margin = new System.Windows.Forms.Padding(4);
             this.nameBox.Name = "nameBox";
             this.nameBox.Size = new System.Drawing.Size(132, 31);
@@ -88,7 +91,7 @@
             // 
             this.RegisterLabel.AutoSize = true;
             this.RegisterLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.RegisterLabel.Location = new System.Drawing.Point(316, 31);
+            this.RegisterLabel.Location = new System.Drawing.Point(316, 9);
             this.RegisterLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.RegisterLabel.Name = "RegisterLabel";
             this.RegisterLabel.Size = new System.Drawing.Size(293, 37);
@@ -98,7 +101,7 @@
             // UsernameLabel
             // 
             this.UsernameLabel.AutoSize = true;
-            this.UsernameLabel.Location = new System.Drawing.Point(261, 98);
+            this.UsernameLabel.Location = new System.Drawing.Point(261, 115);
             this.UsernameLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.UsernameLabel.Name = "UsernameLabel";
             this.UsernameLabel.Size = new System.Drawing.Size(116, 25);
@@ -131,7 +134,7 @@
             // 
             this.PlayBoggleLabel.AutoSize = true;
             this.PlayBoggleLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.PlayBoggleLabel.Location = new System.Drawing.Point(362, 171);
+            this.PlayBoggleLabel.Location = new System.Drawing.Point(362, 182);
             this.PlayBoggleLabel.Name = "PlayBoggleLabel";
             this.PlayBoggleLabel.Size = new System.Drawing.Size(195, 37);
             this.PlayBoggleLabel.TabIndex = 6;
@@ -168,7 +171,7 @@
             // 
             this.pictureBox1.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(30, 306);
+            this.pictureBox1.Location = new System.Drawing.Point(5, 306);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(832, 809);
             this.pictureBox1.TabIndex = 10;
@@ -389,15 +392,6 @@
             this.finalWordsPlayer2.Size = new System.Drawing.Size(142, 354);
             this.finalWordsPlayer2.TabIndex = 34;
             // 
-            // currentScore
-            // 
-            this.currentScore.AutoSize = true;
-            this.currentScore.Location = new System.Drawing.Point(890, 776);
-            this.currentScore.Name = "currentScore";
-            this.currentScore.Size = new System.Drawing.Size(138, 25);
-            this.currentScore.TabIndex = 35;
-            this.currentScore.Text = "current score";
-            // 
             // label21
             // 
             this.label21.AutoSize = true;
@@ -487,11 +481,52 @@
             this.timeLeft.TabIndex = 45;
             this.timeLeft.Text = "00";
             // 
+            // leaveButton
+            // 
+            this.leaveButton.Location = new System.Drawing.Point(895, 825);
+            this.leaveButton.Name = "leaveButton";
+            this.leaveButton.Size = new System.Drawing.Size(118, 42);
+            this.leaveButton.TabIndex = 47;
+            this.leaveButton.Text = "Leave";
+            this.leaveButton.UseVisualStyleBackColor = true;
+            this.leaveButton.Click += new System.EventHandler(this.leaveButton_Click);
+            // 
+            // label17
+            // 
+            this.label17.AutoSize = true;
+            this.label17.Location = new System.Drawing.Point(267, 67);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(91, 25);
+            this.label17.TabIndex = 48;
+            this.label17.Text = "Domain:";
+            // 
+            // domainBox
+            // 
+            this.domainBox.Location = new System.Drawing.Point(396, 67);
+            this.domainBox.Name = "domainBox";
+            this.domainBox.Size = new System.Drawing.Size(132, 31);
+            this.domainBox.TabIndex = 49;
+            // 
+            // helpButton
+            // 
+            this.helpButton.Location = new System.Drawing.Point(12, 9);
+            this.helpButton.Name = "helpButton";
+            this.helpButton.Size = new System.Drawing.Size(153, 94);
+            this.helpButton.TabIndex = 50;
+            this.helpButton.Text = "Help!";
+            this.helpButton.UseVisualStyleBackColor = true;
+            this.helpButton.Click += new System.EventHandler(this.helpButton_Click);
+            // 
             // BoggleView
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1090, 1713);
+            this.AutoScroll = true;
+            this.ClientSize = new System.Drawing.Size(1074, 1559);
+            this.Controls.Add(this.helpButton);
+            this.Controls.Add(this.domainBox);
+            this.Controls.Add(this.label17);
+            this.Controls.Add(this.leaveButton);
             this.Controls.Add(this.timeLeft);
             this.Controls.Add(this.timeLabel);
             this.Controls.Add(this.enterButton);
@@ -502,7 +537,6 @@
             this.Controls.Add(this.totalScorePlayer1);
             this.Controls.Add(this.label22);
             this.Controls.Add(this.label21);
-            this.Controls.Add(this.currentScore);
             this.Controls.Add(this.finalWordsPlayer2);
             this.Controls.Add(this.currentList);
             this.Controls.Add(this.player2);
@@ -579,7 +613,6 @@
         private System.Windows.Forms.Label player2;
         private System.Windows.Forms.ListBox currentList;
         private System.Windows.Forms.ListBox finalWordsPlayer2;
-        private System.Windows.Forms.Label currentScore;
         private System.Windows.Forms.Label label21;
         private System.Windows.Forms.Label label22;
         private System.Windows.Forms.Label totalScorePlayer1;
@@ -590,6 +623,10 @@
         private System.Windows.Forms.Button enterButton;
         private System.Windows.Forms.Label timeLabel;
         private System.Windows.Forms.Label timeLeft;
+        private System.Windows.Forms.Button leaveButton;
+        private System.Windows.Forms.Label label17;
+        private System.Windows.Forms.TextBox domainBox;
+        private System.Windows.Forms.Button helpButton;
     }
 }
 
