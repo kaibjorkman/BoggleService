@@ -127,6 +127,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="App_Data\BoggleDB.mdf" />
+    <Content Include="App_Data\BoggleDB_log.ldf">
+      <DependentUpon>BoggleDB.mdf</DependentUpon>
+    </Content>
     <Content Include="index.html" />
     <Content Include="dictionary.txt" />
     <Content Include="BoggleService.svc" />
@@ -143,7 +147,9 @@
     <Compile Include="IBoggleService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />
     <None Include="Web.Debug.config">

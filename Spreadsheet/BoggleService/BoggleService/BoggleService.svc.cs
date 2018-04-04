@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.Data.SqlClient;
 using System.IO;
 using System.Net;
 using System.ServiceModel.Web;
@@ -16,6 +18,15 @@ namespace Boggle
         private readonly static Dictionary<String, Username> users = new Dictionary<String, Username>();
         private readonly static Dictionary<int, Game> games = new Dictionary<int, Game>();
         private readonly static Queue<PendingGame> pendingGames = new Queue<PendingGame>();
+
+
+        //Connection to Rich Man's Database
+        private static string BoggleDB;
+        static BoggleService()
+        {
+            BoggleDB = ConfigurationManager.ConnectionStrings["BoggleDB"].ConnectionString;
+        }
+
 
         /// <summary>
         /// The most recent call to SetStatus determines the response code used when
@@ -46,26 +57,127 @@ namespace Boggle
         /// <returns></returns>
         public string Register(Username name)
         {
-            lock (sync)
+
+            if (name.Nickname == null || name.Nickname.Trim().Length == 0 || name.Nickname.Trim().Length > 50)
             {
-                if (name.Nickname == null || name.Nickname.Trim().Length == 0)
+                SetStatus(Forbidden);
+                return null;
+            }
+
+            using (SqlConnection conn = new SqlConnection(BoggleDB))
+            {
+                // Connections must be opened
+                conn.Open();
+
+                // Database commands should be executed within a transaction.  When commands 
+                // are executed within a transaction, either all of the commands will succeed
+                // or all will be canceled.  You don't have to worry about some of the commands
+                // changing the DB and others failing.
+                using (SqlTransaction trans = conn.BeginTransaction())
                 {
-                    SetStatus(Forbidden);
-                    return null;
+                    // An SqlCommand executes a SQL statement on the database.  In this case it is an
+                    // insert statement.  The first parameter is the statement, the second is the
+                    // connection, and the third is the transaction.  
+                    //
+                    // Note that I use symbols like @UserID as placeholders for values that need to appear
+                    // in the statement.  You will see below how the placeholders are replaced.  You may be
+                    // tempted to simply paste the values into the string, but this is a BAD IDEA that violates
+                    // a cardinal rule of DB Security 101.  By using the placeholder approach, you don't have
+                    // to worry about escaping special characters and you don't have to worry about one form
+                    // of the SQL injection attack.
+                    using (SqlCommand command =
+                        new SqlCommand("insert into Users (UserID, Nickname) values(@UserID, @Nickname)",
+                                        conn,
+                                        trans))
+                    {
+                        // We generate the userID to use.
+                        string userID = Guid.NewGuid().ToString();
+
+                        // This is where the placeholders are replaced.
+                        command.Parameters.AddWithValue("@UserID", userID);
+                        command.Parameters.AddWithValue("@Nickname", name.Nickname.Trim());
+                        
+
+                        // This executes the command within the transaction over the connection.  The number of rows
+                        // that were modified is returned.
+                        if (command.ExecuteNonQuery() != 1)
+                        {
+                            throw new Exception("Query failed unexpectedly");
+                        }
+                        SetStatus(Created);
+
+                        // Immediately before each return that appears within the scope of a transaction, it is
+                        // important to commit the transaction.  Otherwise, the transaction will be aborted and
+                        // rolled back as soon as control leaves the scope of the transaction. 
+                        trans.Commit();
+                        return userID;
+                    }
                 }
-                else
-                {
-                    string userID = Guid.NewGuid().ToString();
-                    users.Add(userID, name);
-                    SetStatus(Created);
-                    return userID;
-                }
-                
+
+
             }
         }
 
         public int JoinGame(GameRequest request)
         {
+            using (SqlConnection conn = new SqlConnection(BoggleDB))
+            {
+                conn.Open();
+                using (SqlTransaction trans = conn.BeginTransaction())
+                {
+
+                    // Here, the SqlCommand is a select query.  We are interested in whether item.UserID exists in
+                    // the Users table.
+                    using (SqlCommand command = new SqlCommand("select UserID from Users where UserID = @UserID", conn, trans))
+                    {
+                        command.Parameters.AddWithValue("@UserID", request.UserToken);
+
+                        // This executes a query (i.e. a select statement).  The result is an
+                        // SqlDataReader that you can use to iterate through the rows in the response.
+                        using (SqlDataReader reader = command.ExecuteReader())
+                        {
+                            // In this we don't actually need to read any data; we only need
+                            // to know whether a row was returned.
+                            if (!reader.HasRows)
+                            {
+                                SetStatus(Forbidden);
+                                reader.Close();
+                                trans.Commit();
+                                return -1;
+                            }
+                        }
+                    }
+
+                    if (request.TimeLimit < 5 || request.TimeLimit > 120)
+                    {
+                        SetStatus(Forbidden);
+                        return 0;
+                    }
+
+                    using (SqlCommand command = new SqlCommand("select GameID from Games where GameID = @UserID", conn, trans))
+                    {
+                        command.Parameters.AddWithValue("@UserID", request.UserToken);
+
+                        // This executes a query (i.e. a select statement).  The result is an
+                        // SqlDataReader that you can use to iterate through the rows in the response.
+                        using (SqlDataReader reader = command.ExecuteReader())
+                        {
+                            // In this we don't actually need to read any data; we only need
+                            // to know whether a row was returned.
+                            if (!reader.HasRows)
+                            {
+                                SetStatus(Forbidden);
+                                reader.Close();
+                                trans.Commit();
+                                return -1;
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            /**
             lock (sync)
             {
                 int GameID = 0;
@@ -175,6 +287,7 @@ namespace Boggle
                 }
 
             }
+    **/
         }
 
         /// <summary>
@@ -501,13 +614,26 @@ namespace Boggle
 
         public Game GetStatus(string GameID, string brief)
         {
-            int GameID_int = Int32.Parse(GameID);
+            int GameID_int;
 
-            if (!games.ContainsKey(GameID_int))
+            try
+            {
+                GameID_int = Int32.Parse(GameID);
+
+                if (!games.ContainsKey(GameID_int))
+                {
+                    SetStatus(Forbidden);
+                    return null;
+                }
+            }
+            catch(Exception ex)
             {
                 SetStatus(Forbidden);
                 return null;
             }
+
+           
+
 
             //check if brief was a paramater or not
             if (brief == null)
