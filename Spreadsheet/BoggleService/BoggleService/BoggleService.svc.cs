@@ -120,6 +120,7 @@ namespace Boggle
 
         public int JoinGame(GameRequest request)
         {
+            /**
             using (SqlConnection conn = new SqlConnection(BoggleDB))
             {
                 conn.Open();
@@ -175,9 +176,9 @@ namespace Boggle
                     }
                 }
             }
+            **/
 
-
-            /**
+            
             lock (sync)
             {
                 int GameID = 0;
@@ -287,7 +288,6 @@ namespace Boggle
                 }
 
             }
-    **/
         }
 
         /// <summary>
