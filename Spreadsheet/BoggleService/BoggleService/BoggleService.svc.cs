@@ -44,7 +44,7 @@ namespace Boggle
         /// </summary>
         /// <param name="nickname"></param>
         /// <returns></returns>
-        public string Register(Username name)
+        public UserResponse Register(Username name)
         {
             lock (sync)
             {
@@ -58,13 +58,15 @@ namespace Boggle
                     string userID = Guid.NewGuid().ToString();
                     users.Add(userID, name);
                     SetStatus(Created);
-                    return userID;
+                    UserResponse response = new UserResponse();
+                    response.UserToken = userID;
+                    return response;
                 }
                 
             }
         }
 
-        public int JoinGame(GameRequest request)
+        public JoinGameResponse JoinGame(GameRequest request)
         {
             lock (sync)
             {
@@ -73,13 +75,13 @@ namespace Boggle
                 if(!users.ContainsKey(request.UserToken))
                 {
                     SetStatus(Forbidden);
-                    return 0;
+                    return null;
                 }
 
                 if(request.TimeLimit < 5 || request.TimeLimit > 120)
                 {
                     SetStatus(Forbidden);
-                    return 0;
+                    return null;
                 }
                 
                 //check if there is a pending game they could join
@@ -89,7 +91,7 @@ namespace Boggle
                     if(pendingGames.Peek().UserToken == request.UserToken)
                     {
                         SetStatus(Conflict);
-                        return 0;
+                        return null;
                     }
 
                     SetStatus(Created);
@@ -115,12 +117,13 @@ namespace Boggle
                     games[GameID].Player2.Nickname = users[request.UserToken].Nickname;
                     games[GameID].Player2.Score = 0;
                     games[GameID].Player2.UserToken = request.UserToken;
-                    WordsPlayedObject player2Words = new WordsPlayedObject();
-                    games[GameID].Player2.PlayerTwoWords = player2Words;
                     List<WordPlayed> WordsPlayed = new List<WordPlayed>();
-                    player2Words.WordsPlayed = WordsPlayed;
+                    games[GameID].Player2.WordsPlayed = WordsPlayed;
 
-                    return GameID;
+                    JoinGameResponse response = new JoinGameResponse();
+                    response.GameID = GameID;
+
+                    return response;
                     
                 }
 
@@ -137,7 +140,7 @@ namespace Boggle
                     newGame.Player1.Score = 0;
                     
 
-                    newGame.GameState = "Pending";
+                    newGame.GameState = "pending";
                     newGame.TimeLimit = request.TimeLimit;
 
                     //create random Game ID
@@ -166,12 +169,14 @@ namespace Boggle
 
                     //save this game id within the first player
                     games[GameID].Player1.UserToken = request.UserToken;
-                    WordsPlayedObject player1Words = new WordsPlayedObject();
-                    games[GameID].Player1.PlayerOneWords = player1Words;
                     List<WordPlayed> WordsPlayed = new List<WordPlayed>();
-                    player1Words.WordsPlayed = WordsPlayed;
+                    games[GameID].Player1.WordsPlayed = WordsPlayed;
 
-                    return GameID;
+
+                    JoinGameResponse response = new JoinGameResponse();
+                    response.GameID = GameID;
+
+                    return response;
                 }
 
             }
@@ -242,22 +247,32 @@ namespace Boggle
 
         }
 
-        public int PlayWord(WordAttempt attempt, string GameID)
+        public PlayWordResponse PlayWord(WordAttempt attempt, string GameID)
         {
-            int GameID_int = Int32.Parse(GameID);
-            
+            int GameID_int;
+            try
+            {
+                GameID_int = Int32.Parse(GameID);
+            }
+
+            catch (Exception ex)
+            {
+                SetStatus(Forbidden);
+                return null;
+            }
+
 
             //If Word is null or empty or longer than 30 characters when trimmed, responds with response code 403 (Forbidden).
             if (attempt.Word == null || attempt.Word.Length <= 0 || attempt.Word.Length > 30)
             {
                 SetStatus(Forbidden);
-                return 0;
+                return null;
             }
             //if GameID or UserToken is invalid, responds with response code 403 (Forbidden).
-            else if (!games.ContainsKey(GameID_int) || !users.ContainsKey(attempt.UserToken))
+            if (!games.ContainsKey(GameID_int) || !users.ContainsKey(attempt.UserToken))
             {
                 SetStatus(Forbidden);
-                return 0;
+                return null;
             }
             //if UserToken is not a player in the game identified by GameID, responds with response code 403 (Forbidden).
             if (!games[GameID_int].Player1.UserToken.Equals(attempt.UserToken))
@@ -265,10 +280,23 @@ namespace Boggle
                 if (!games[GameID_int].Player2.UserToken.Equals(attempt.UserToken))
                 {
                     SetStatus(Forbidden);
-                    return 0;
+                    return null;
                 }
-                
+               
             }
+
+            int timeLimit = games[GameID_int].TimeLimit;
+            int startTime = games[GameID_int].StartTime;
+            int currentTime = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
+            int timeElapsed = currentTime - startTime;
+            int timeLeft = timeLimit - timeElapsed;
+            //if the game state is anything other than "active", responds with response code 409 (Conflict).
+            if (currentTime - startTime >= timeLimit)
+            {
+                SetStatus(Conflict);
+                return null;
+            }
+
             //check if its an actual word
             using (StreamReader words = new StreamReader(AppDomain.CurrentDomain.BaseDirectory + "dictionary.txt"))
             {
@@ -292,187 +320,225 @@ namespace Boggle
                     {
                         word.Word = attempt.Word;
                         word.Score = -1;
-                        games[GameID_int].Player1.PlayerOneWords.WordsPlayed.Add(word);
+                        games[GameID_int].Player1.WordsPlayed.Add(word);
                         games[GameID_int].Player1.Score = games[GameID_int].Player1.Score - 1;
                     }
                     else
                     {
                         word.Word = attempt.Word;
                         word.Score = -1;
-                        games[GameID_int].Player2.PlayerTwoWords.WordsPlayed.Add(word);
+                        games[GameID_int].Player2.WordsPlayed.Add(word);
                         games[GameID_int].Player2.Score = games[GameID_int].Player2.Score - 1;
                     }
-                    return -1;
+
+                    PlayWordResponse response = new PlayWordResponse();
+                    response.Score = -1;
+                    return response;
                 }
             }
 
-            int timeLimit = games[GameID_int].TimeLimit;
-            int startTime = games[GameID_int].StartTime;
-            int currentTime = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
-            int timeElapsed = currentTime - startTime;
-            int timeLeft = timeLimit - timeElapsed;
-
-            //if the game state is anything other than "active", responds with response code 409 (Conflict).
-            if (currentTime - startTime >= timeLimit)
+            if(attempt.Word.Trim().Length < 3)
             {
-                SetStatus(Conflict);
-                return 0;
+                WordPlayed word = new WordPlayed();
+                PlayWordResponse response = new PlayWordResponse();
+                if (games[GameID_int].Player1.UserToken == attempt.UserToken)
+                {
+                    SetStatus(OK);
+                    word.Word = attempt.Word;
+                    word.Score = 0;
+                    games[GameID_int].Player1.WordsPlayed.Add(word);
+                    games[GameID_int].Player1.Score = games[GameID_int].Player1.Score + 0;
+                    response.Score = 0;
+                    return response;
+                }
+                else
+                {
+                    SetStatus(OK);
+                    word.Word = attempt.Word;
+                    word.Score = 0;
+                    games[GameID_int].Player2.WordsPlayed.Add(word);
+                    games[GameID_int].Player2.Score = games[GameID_int].Player2.Score + 0;
+                    response.Score = 0;
+                    return response;
+                }
             }
+
+            
             //records the trimmed Word as being played by UserToken in the game identified by GameID. 
             //Returns the score for Word in the context of the game (e.g. if Word has been played before the score is zero). 
             //Responds with status 200 (OK). Note: The word is not case sensitive.
 
             //checks to see if the word entered is contained on the boggle board
-            else if (games[GameID_int].BoggleBoard.CanBeFormed(attempt.Word))
+            if (games[GameID_int].BoggleBoard.CanBeFormed(attempt.Word))
             {
                 //check to see which player entered a word
                 if(games[GameID_int].Player1.UserToken == attempt.UserToken)
                 {
                     //if player one entered a word loop through the words that he/she already entered
                     //and return the score of that word
-                    foreach(WordPlayed playedWord in games[GameID_int].Player1.PlayerOneWords.WordsPlayed)
+                    foreach(WordPlayed playedWord in games[GameID_int].Player1.WordsPlayed)
                     {
                         //if the user already entered a word, return a score of 0
                         if(playedWord.Word == attempt.Word)
                         {
                             SetStatus(OK);
-                            return 0;
+                            PlayWordResponse repeat = new PlayWordResponse();
+                            repeat.Score = 0;
+                            return repeat;
                         }
                     }
 
                     //else return the score of the word based on its length
                     int length = attempt.Word.Length;
                     WordPlayed word = new WordPlayed();
+                    PlayWordResponse response = new PlayWordResponse();
                     switch (length)
                     {
                         case 3:
                             SetStatus(OK);
                             word.Word = attempt.Word;
                             word.Score = 1;
-                            games[GameID_int].Player1.PlayerOneWords.WordsPlayed.Add(word);
+                            games[GameID_int].Player1.WordsPlayed.Add(word);
                             games[GameID_int].Player1.Score = games[GameID_int].Player1.Score + 1;
-                            return 1;
+                            response.Score = 1;
+                            return response;
                         case 4:
                             SetStatus(OK);
                             word.Word = attempt.Word;
                             word.Score = 1;
-                            games[GameID_int].Player1.PlayerOneWords.WordsPlayed.Add(word);
+                            games[GameID_int].Player1.WordsPlayed.Add(word);
                             games[GameID_int].Player1.Score = games[GameID_int].Player1.Score + 1;
-                            return 1;
+                            response.Score = 1;
+                            return response;
                         case 5:
                             SetStatus(OK);
                             word.Word = attempt.Word;
                             word.Score = 2;
-                            games[GameID_int].Player1.PlayerOneWords.WordsPlayed.Add(word);
+                            games[GameID_int].Player1.WordsPlayed.Add(word);
                             games[GameID_int].Player1.Score = games[GameID_int].Player1.Score + 2;
-                            return 2;
+                            response.Score = 2;
+                            return response;
                         case 6:
                             SetStatus(OK);
                             word.Word = attempt.Word;
                             word.Score = 3;
-                            games[GameID_int].Player1.PlayerOneWords.WordsPlayed.Add(word);
+                            games[GameID_int].Player1.WordsPlayed.Add(word);
                             games[GameID_int].Player1.Score = games[GameID_int].Player1.Score + 3;
-                            return 3;
+                            response.Score = 3;
+                            return response;
                         case 7:
                             SetStatus(OK);
                             word.Word = attempt.Word;
-                            word.Score = 4;
-                            games[GameID_int].Player1.PlayerOneWords.WordsPlayed.Add(word);
-                            games[GameID_int].Player1.Score = games[GameID_int].Player1.Score + 4;
-                            return 4;
+                            word.Score = 5;
+                            games[GameID_int].Player1.WordsPlayed.Add(word);
+                            games[GameID_int].Player1.Score = games[GameID_int].Player1.Score + 5;
+                            response.Score = 5;
+                            return response;
                         case 8:
                             SetStatus(OK);
                             word.Word = attempt.Word;
                             word.Score = 11;
-                            games[GameID_int].Player1.PlayerOneWords.WordsPlayed.Add(word);
+                            games[GameID_int].Player1.WordsPlayed.Add(word);
                             games[GameID_int].Player1.Score = games[GameID_int].Player1.Score + 11;
-                            return 11;
+                            response.Score = 11;
+                            return response;
                     }
                     if (length > 8)
                     {
                         SetStatus(OK);
                         word.Word = attempt.Word;
-                        word.Score = 1;
-                        games[GameID_int].Player1.PlayerOneWords.WordsPlayed.Add(word);
+                        word.Score = 11;
+                        games[GameID_int].Player1.WordsPlayed.Add(word);
                         games[GameID_int].Player1.Score = games[GameID_int].Player1.Score + 11;
-                        return 11;
+                        response.Score = 11;
+                        return response;
                     }
                     //should not reach
-                    return -2;
+                    return null;
                 }
                 else
                 {
                     //if player two entered a word loop through the words that he/she already entered
                     //and return the score of that word
-                    foreach (WordPlayed attemptedWord in games[GameID_int].Player2.PlayerTwoWords.WordsPlayed)
+                    foreach (WordPlayed attemptedWord in games[GameID_int].Player2.WordsPlayed)
                     {
                         //if the user already entered a word, return a score of 0
                         if (attemptedWord.Word == attempt.Word)
                         {
                             SetStatus(OK);
-                            return 0;
+                            PlayWordResponse repeat = new PlayWordResponse();
+                            repeat.Score = 0;
+                            return repeat;
                         }
                     }
 
                     //else return the score of the word based on its length
                     int length = attempt.Word.Length;
                     WordPlayed word = new WordPlayed();
+                    PlayWordResponse response = new PlayWordResponse();
                     switch (length)
                     {
                         case 3:
                             SetStatus(OK);
                             word.Word = attempt.Word;
                             word.Score = 1;
-                            games[GameID_int].Player2.PlayerTwoWords.WordsPlayed.Add(word);
+                            games[GameID_int].Player2.WordsPlayed.Add(word);
                             games[GameID_int].Player2.Score = games[GameID_int].Player2.Score + 1;
-                            return 1;
+                            response.Score = 1;
+                            return response;
                         case 4:
                             SetStatus(OK);
                             word.Word = attempt.Word;
                             word.Score = 1;
-                            games[GameID_int].Player2.PlayerTwoWords.WordsPlayed.Add(word);
+                            games[GameID_int].Player2.WordsPlayed.Add(word);
                             games[GameID_int].Player2.Score = games[GameID_int].Player2.Score + 1;
-                            return 1;
+                            response.Score = 1;
+                            return response;
                         case 5:
                             SetStatus(OK);
                             word.Word = attempt.Word;
                             word.Score = 2;
-                            games[GameID_int].Player2.PlayerTwoWords.WordsPlayed.Add(word);
+                            games[GameID_int].Player2.WordsPlayed.Add(word);
                             games[GameID_int].Player2.Score = games[GameID_int].Player2.Score + 2;
-                            return 2;
+                            response.Score = 2;
+                            return response;
                         case 6:
                             SetStatus(OK);
                             word.Word = attempt.Word;
                             word.Score = 3;
-                            games[GameID_int].Player2.PlayerTwoWords.WordsPlayed.Add(word);
+                            games[GameID_int].Player2.WordsPlayed.Add(word);
                             games[GameID_int].Player2.Score = games[GameID_int].Player2.Score + 3;
-                            return 3;
+                            response.Score = 3;
+                            return response;
                         case 7:
                             SetStatus(OK);
                             word.Word = attempt.Word;
-                            word.Score = 4;
-                            games[GameID_int].Player2.PlayerTwoWords.WordsPlayed.Add(word);
-                            games[GameID_int].Player2.Score = games[GameID_int].Player2.Score + 4;
-                            return 4;
+                            word.Score = 5;
+                            games[GameID_int].Player2.WordsPlayed.Add(word);
+                            games[GameID_int].Player2.Score = games[GameID_int].Player2.Score + 5;
+                            response.Score = 5;
+                            return response;
                         case 8:
                             SetStatus(OK);
                             word.Word = attempt.Word;
                             word.Score = 11;
-                            games[GameID_int].Player2.PlayerTwoWords.WordsPlayed.Add(word);
+                            games[GameID_int].Player2.WordsPlayed.Add(word);
                             games[GameID_int].Player2.Score = games[GameID_int].Player2.Score + 11;
-                            return 11;
+                            response.Score = 11;
+                            return response;
                     }
                     if (length > 8)
                     {
                         SetStatus(OK);
                         word.Word = attempt.Word;
-                        word.Score = 1;
-                        games[GameID_int].Player2.PlayerTwoWords.WordsPlayed.Add(word);
+                        word.Score = 11;
+                        games[GameID_int].Player2.WordsPlayed.Add(word);
                         games[GameID_int].Player2.Score = games[GameID_int].Player2.Score + 11;
-                        return 11;
+                        response.Score = 11;
+                        return response;
                     }
                     //should not reach
-                    return -2;
+                    return null;
                 }
             }
             else
@@ -484,24 +550,36 @@ namespace Boggle
                 {
                     word.Word = attempt.Word;
                     word.Score = -1;
-                    games[GameID_int].Player1.PlayerOneWords.WordsPlayed.Add(word);
+                    games[GameID_int].Player1.WordsPlayed.Add(word);
                     games[GameID_int].Player1.Score = games[GameID_int].Player1.Score - 1;
                 }
                 else
                 {
                     word.Word = attempt.Word;
                     word.Score = -1;
-                    games[GameID_int].Player2.PlayerTwoWords.WordsPlayed.Add(word);
+                    games[GameID_int].Player2.WordsPlayed.Add(word);
                     games[GameID_int].Player2.Score = games[GameID_int].Player2.Score - 1;
                 }
 
-                return -1;
+                PlayWordResponse response = new PlayWordResponse();
+                response.Score = -1;
+                return response;
             }
         }
 
         public Game GetStatus(string GameID, string brief)
         {
-            int GameID_int = Int32.Parse(GameID);
+            int GameID_int;
+            try
+            {
+                GameID_int = Int32.Parse(GameID);
+            }
+
+            catch(Exception ex)
+            {
+                SetStatus(Forbidden);
+                return null;
+            }
 
             if (!games.ContainsKey(GameID_int))
             {
@@ -509,8 +587,16 @@ namespace Boggle
                 return null;
             }
 
+            if(games[GameID_int].GameState == "pending")
+            {
+                Game pendingGame = new Game();
+                pendingGame.GameState = "pending";
+                SetStatus(OK);
+                return pendingGame;
+            }
+
             //check if brief was a paramater or not
-            if (brief == null)
+            if (brief != "yes")
             {
                 SetStatus(OK);
 
@@ -538,19 +624,15 @@ namespace Boggle
 
                     playerOneComplete.Score = games[GameID_int].Player1.Score;
                     playerOneComplete.Nickname = games[GameID_int].Player1.Nickname;
-                    WordsPlayedObject playerOneWords = new WordsPlayedObject();
-                    playerOneComplete.PlayerOneWords = playerOneWords;
                     List<WordPlayed> WordsPlayed = new List<WordPlayed>();
-                    playerOneWords.WordsPlayed = WordsPlayed;
-                    playerOneWords.WordsPlayed = games[GameID_int].Player1.PlayerOneWords.WordsPlayed;
+                    playerOneComplete.WordsPlayed = WordsPlayed;
+                    playerOneComplete.WordsPlayed = games[GameID_int].Player1.WordsPlayed;
 
                     playerTwoComplete.Score = games[GameID_int].Player2.Score;
                     playerTwoComplete.Nickname = games[GameID_int].Player2.Nickname;
-                    WordsPlayedObject playerTwoWords = new WordsPlayedObject();
-                    playerTwoComplete.PlayerTwoWords = playerTwoWords;
                     List<WordPlayed> WordsPlayed2 = new List<WordPlayed>();
-                    playerTwoWords.WordsPlayed = WordsPlayed2;
-                    playerTwoWords.WordsPlayed = games[GameID_int].Player2.PlayerTwoWords.WordsPlayed;
+                    playerTwoComplete.WordsPlayed = WordsPlayed2;
+                    playerTwoComplete.WordsPlayed = games[GameID_int].Player2.WordsPlayed;
 
                     return gameComplete;
                 }

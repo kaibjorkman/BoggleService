@@ -29,7 +29,7 @@ namespace Boggle
         /// Otherwise, creates a user, returns the user's token, and responds with status code Created. 
         /// </summary>
         [WebInvoke(Method = "POST", UriTemplate = "/users")]
-        string Register(Username name);
+        UserResponse Register(Username name);
 
         /// <summary>
         /// if the player is in a queue it will cancel the queue and send back 200 OK, else will send back 403 Forbidden
@@ -44,13 +44,13 @@ namespace Boggle
         /// <param name="request"></param>
         /// <returns></returns>
         [WebInvoke(Method = "POST", UriTemplate = "/games")]
-        int JoinGame(GameRequest request);
+        JoinGameResponse JoinGame(GameRequest request);
            
         /// <summary>
         /// gets a word from the user and checks to see if it is part of the boggle board and returns the score
         /// </summary>
         [WebInvoke(Method = "PUT", UriTemplate = "/games/{GameID}")]
-        int PlayWord(WordAttempt attempt, string GameID);
+        PlayWordResponse PlayWord(WordAttempt attempt, string GameID);
 
        /// <summary>
        /// If GameID is invalid, responds with status 403 (Forbidden).

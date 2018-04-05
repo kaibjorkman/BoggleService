@@ -13,6 +13,11 @@ namespace Boggle
             public string Nickname { get; set; }
         }
 
+        public class UserResponse
+        {
+            public string UserToken { get; set; }
+        }
+
         public class GameRequest
         {
             public string UserToken { get; set; }
@@ -28,6 +33,11 @@ namespace Boggle
         {
             public string UserToken { get; set; }
 
+            public int GameID { get; set; }
+        }
+
+        public class JoinGameResponse
+        {
             public int GameID { get; set; }
         }
 
@@ -47,7 +57,7 @@ namespace Boggle
             public int TimeLimit { get; set; }
 
             [DataMember(EmitDefaultValue = false)]
-            public int TimeLeft { get; set; }
+            public int? TimeLeft { get; set; }
 
             [DataMember(EmitDefaultValue = false)]
             public int StartTime { get; set; }
@@ -73,7 +83,7 @@ namespace Boggle
             public int Score { get; set; }
 
             [DataMember(EmitDefaultValue = false)]
-            public WordsPlayedObject PlayerOneWords { get; set; }
+            public List<WordPlayed> WordsPlayed { get; set; }
             
         }
 
@@ -90,15 +100,12 @@ namespace Boggle
             public int Score { get; set; }
 
             [DataMember(EmitDefaultValue = false)]
-            public WordsPlayedObject PlayerTwoWords { get; set; }
+            public List<WordPlayed> WordsPlayed { get; set; }
 
         }
 
 
-        public class WordsPlayedObject
-        {
-            public List<WordPlayed> WordsPlayed { get; set;}
-        }
+       
 
         public class WordPlayed
         {
@@ -106,6 +113,11 @@ namespace Boggle
 
             public int Score { get; set; }
 
+        }
+
+        public class PlayWordResponse
+        {
+            public int Score { get; set; }
         }
 
         public class WordAttempt
