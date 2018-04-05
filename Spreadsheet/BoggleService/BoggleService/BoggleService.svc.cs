@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.Data.SqlClient;
 using System.IO;
 using System.Net;
 using System.ServiceModel.Web;
@@ -17,6 +19,12 @@ namespace Boggle
         private readonly static Dictionary<int, Game> games = new Dictionary<int, Game>();
         private readonly static Queue<PendingGame> pendingGames = new Queue<PendingGame>();
 
+        private static string BoggleDB;
+  
+       static BoggleService()
+       {
+            BoggleDB = ConfigurationManager.ConnectionStrings["BoggleDB"].ConnectionString;
+       }
         /// <summary>
         /// The most recent call to SetStatus determines the response code used when
         /// an http response is sent.
@@ -46,23 +54,66 @@ namespace Boggle
         /// <returns></returns>
         public UserResponse Register(Username name)
         {
-            lock (sync)
+
+            if (name.Nickname == null || name.Nickname.Trim().Length == 0 || name.Nickname.Trim().Length > 50)
             {
-                if (name.Nickname == null || name.Nickname.Trim().Length == 0)
+                SetStatus(Forbidden);
+                return null;
+            }
+
+            using (SqlConnection conn = new SqlConnection(BoggleDB))
+            {
+                // Connections must be opened
+                conn.Open();
+
+                // Database commands should be executed within a transaction.  When commands 
+                // are executed within a transaction, either all of the commands will succeed
+                // or all will be canceled.  You don't have to worry about some of the commands
+                // changing the DB and others failing.
+                using (SqlTransaction trans = conn.BeginTransaction())
                 {
-                    SetStatus(Forbidden);
-                    return null;
+                    // An SqlCommand executes a SQL statement on the database.  In this case it is an
+                    // insert statement.  The first parameter is the statement, the second is the
+                    // connection, and the third is the transaction.  
+                    //
+                    // Note that I use symbols like @UserID as placeholders for values that need to appear
+                    // in the statement.  You will see below how the placeholders are replaced.  You may be
+                    // tempted to simply paste the values into the string, but this is a BAD IDEA that violates
+                    // a cardinal rule of DB Security 101.  By using the placeholder approach, you don't have
+                    // to worry about escaping special characters and you don't have to worry about one form
+                    // of the SQL injection attack.
+                    using (SqlCommand command =
+                        new SqlCommand("insert into Users (UserID, Nickname) values(@UserID, @Nickname)",
+                                        conn,
+                                        trans))
+                    {
+                        // We generate the userID to use.
+                        string userID = Guid.NewGuid().ToString();
+
+                        // This is where the placeholders are replaced.
+                        command.Parameters.AddWithValue("@UserID", userID);
+                        command.Parameters.AddWithValue("@Nickname", name.Nickname.Trim());
+
+
+                        // This executes the command within the transaction over the connection.  The number of rows
+                        // that were modified is returned.
+                        if (command.ExecuteNonQuery() != 1)
+                        {
+                            throw new Exception("Query failed unexpectedly");
+                        }
+                        SetStatus(Created);
+
+                        // Immediately before each return that appears within the scope of a transaction, it is
+                        // important to commit the transaction.  Otherwise, the transaction will be aborted and
+                        // rolled back as soon as control leaves the scope of the transaction. 
+                        trans.Commit();
+                        UserResponse response = new UserResponse();
+                        response.UserToken = userID;
+                        return response;
+                    }
                 }
-                else
-                {
-                    string userID = Guid.NewGuid().ToString();
-                    users.Add(userID, name);
-                    SetStatus(Created);
-                    UserResponse response = new UserResponse();
-                    response.UserToken = userID;
-                    return response;
-                }
-                
+
+
             }
         }
 
