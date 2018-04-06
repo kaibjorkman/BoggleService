@@ -1,0 +1,1 @@
+﻿insert into Games (GameID) values ('1123')

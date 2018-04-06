@@ -38,7 +38,7 @@ namespace Boggle
 
         public class JoinGameResponse
         {
-            public int GameID { get; set; }
+            public string GameID { get; set; }
         }
 
         [DataContract]

@@ -1,0 +1,1 @@
+﻿insert into Words (Word, GameID, Player, Score) values(@Word, @GameID, @Player, @Score)
