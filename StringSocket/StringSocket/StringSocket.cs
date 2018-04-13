@@ -62,6 +62,34 @@ namespace CustomNetworking
         // Encoding used for sending and receiving
         private Encoding encoding;
 
+        //struct to represent a send Request
+        private struct BeginSendRequest
+        {
+            public string Text { get; set; }
+            public SendCallback Callback { get; set; }
+            public Object Payload { get; set; }
+            
+        }
+
+        //struct to represent recieve requests
+        private struct BeginRecieveRequest
+        {
+            public ReceiveCallback Callback { get; set; }
+            public object Payload { get; set; }
+        }
+
+        //Queue's to keep track of requests
+        private Queue<BeginSendRequest> sendRequestQueue;
+        private Queue<BeginRecieveRequest> recieveRequestQueue;
+
+        //byte array
+        private byte[] pendingBytes = new byte[0];
+        private int pendingIndex;
+
+
+
+
+
         /// <summary>
         /// Creates a StringSocket from a regular Socket, which should already be connected.  
         /// The read and write methods of the regular Socket must not be called after the
@@ -72,6 +100,9 @@ namespace CustomNetworking
         {
             socket = s;
             encoding = e;
+
+            sendRequestQueue = new Queue<BeginSendRequest>();
+            recieveRequestQueue = new Queue<BeginRecieveRequest>();
             // TODO: Complete implementation of StringSocket
         }
 
@@ -117,7 +148,71 @@ namespace CustomNetworking
         /// </summary>
         public void BeginSend(String s, SendCallback callback, object payload)
         {
-            // TODO: Implement BeginSend
+            lock(sendRequestQueue)
+            {
+                BeginSendRequest request = new BeginSendRequest();
+                request.Text = s;
+                request.Payload = payload;
+                request.Callback = callback;
+                sendRequestQueue.Enqueue(request);
+
+                if(sendRequestQueue.Count == 1)
+                {
+                    this.ProcessSendQueue();
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Proccess the request in the queue and decode bytes and try to send to socket
+        /// </summary>
+        private void ProcessSendQueue()
+        {
+            while(sendRequestQueue.Count > 0)
+            {
+                pendingBytes = encoding.GetBytes(sendRequestQueue.Peek().Text);
+                
+                if(pendingBytes.Length > 0)
+                {
+                    socket.BeginSend(pendingBytes, pendingIndex, pendingBytes.Length - pendingIndex, SocketFlags.None, SendBytes, null);
+                    break;
+                }
+                
+            }
+        }
+
+        private void SendBytes(IAsyncResult result)
+        {
+            int bytesSent = socket.EndSend(result);
+            if(bytesSent == 0)
+            {
+                lock (sendRequestQueue)
+                {
+                    BeginSendRequest req = sendRequestQueue.Dequeue();
+                    req.Callback(false, req.Payload);
+                }
+            }
+            
+            pendingIndex += bytesSent;
+                
+            //check if all bytes have been sent
+            if(pendingIndex == pendingBytes.Length)
+            {
+                lock(sendRequestQueue)
+                {
+                    BeginSendRequest req = sendRequestQueue.Dequeue();
+                    req.Callback(true, req.Payload);
+                }
+                
+
+            }
+
+            else
+            {
+                    //try to begin send to socket
+                    socket.BeginSend(pendingBytes, pendingIndex, pendingBytes.Length - pendingIndex, SocketFlags.None, SendBytes, null);
+                
+            }
         }
 
         /// <summary>
