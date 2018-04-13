@@ -150,6 +150,7 @@ namespace CustomNetworking
         {
             lock(sendRequestQueue)
             {
+                
                 BeginSendRequest request = new BeginSendRequest();
                 request.Text = s;
                 request.Payload = payload;
@@ -188,7 +189,7 @@ namespace CustomNetworking
             {
                 lock (sendRequestQueue)
                 {
-                    BeginSendRequest req = sendRequestQueue.Dequeue();
+                    BeginSendRequest req = sendRequestQueue.Peek();
                     req.Callback(false, req.Payload);
                 }
             }
@@ -209,7 +210,7 @@ namespace CustomNetworking
 
             else
             {
-                    //try to begin send to socket
+                    //send it again becuase not all bytes were sent
                     socket.BeginSend(pendingBytes, pendingIndex, pendingBytes.Length - pendingIndex, SocketFlags.None, SendBytes, null);
                 
             }

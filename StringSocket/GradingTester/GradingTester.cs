@@ -85,6 +85,7 @@ namespace GradingTester
                 OpenSockets(port, out server, out receiver, out sender);
                 String line = "";
                 ManualResetEvent mre = new ManualResetEvent(false);
+                
 
                 try
                 {
@@ -260,7 +261,7 @@ namespace GradingTester
 
                 try
                 {
-                    foreach (char c in "Hello\n")
+                    foreach (char c in "Hello/n")
                     {
                         sender.BeginSend(c.ToString(), (s, p) => { }, null);
                     }
