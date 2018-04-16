@@ -89,7 +89,6 @@ namespace CustomNetworking
 
         //byte array
         private byte[] pendingSendBytes = new byte[0];
-        private byte[] pendingRecieveBytes = new byte[0];
         private int pendingIndex;
 
 
@@ -113,7 +112,7 @@ namespace CustomNetworking
         {
             socket = s;
             encoding = e;
-
+            incoming = new StringBuilder();
             sendRequestQueue = new Queue<BeginSendRequest>();
             receiveRequestQueue = new Queue<BeginRecieveRequest>();
             
@@ -233,7 +232,7 @@ namespace CustomNetworking
             }
 
             else
-            {
+            { 
                 //send it again becuase not all bytes were sent
                 socket.BeginSend(pendingSendBytes, pendingIndex, pendingSendBytes.Length - pendingIndex, SocketFlags.None, SendBytes, null);
             }
@@ -300,20 +299,22 @@ namespace CustomNetworking
         /// </summary>
         private void ProcessRecieveQueue()
         {
-            if (receiveRequestQueue.Count > 0 && recievedLines.Count == 1)
+            lock (receiveRequestQueue)
             {
-                lock (receiveRequestQueue)
+                if (receiveRequestQueue.Count > 0 && recievedLines.Count == 1)
                 {
+
                     BeginRecieveRequest req = receiveRequestQueue.Dequeue();
                     string recievedLine = recievedLines.Dequeue();
                     ThreadPool.QueueUserWorkItem(x => req.Callback(recievedLine, req.Payload));
+
                 }
-            }
-            if (receiveRequestQueue.Count > 0)
-            {
-              
-                    socket.BeginReceive(pendingRecieveBytes, 0, pendingRecieveBytes.Length, SocketFlags.None, RecieveBytes, null);
-                
+                if (receiveRequestQueue.Count > 0)
+                {
+
+                    socket.BeginReceive(incomingBytes, 0, incomingBytes.Length, SocketFlags.None, RecieveBytes, null);
+
+                }
             }
         }
 
@@ -326,9 +327,12 @@ namespace CustomNetworking
             // Report that to the console and close our socket.
             if (bytesRead == 0)
             {
-                BeginRecieveRequest req = receiveRequestQueue.Dequeue();
-                ThreadPool.QueueUserWorkItem(x => req.Callback(null, req.Payload));
-                socket.Close();
+                lock (receiveRequestQueue)
+                {
+                    BeginRecieveRequest req = receiveRequestQueue.Dequeue();
+                    ThreadPool.QueueUserWorkItem(x => req.Callback(null, req.Payload));
+                    socket.Close();
+                }
             }
 
             // Otherwise, decode and display the incoming bytes.  Then request more bytes.
@@ -337,8 +341,8 @@ namespace CustomNetworking
                 // Convert the bytes into characters and appending to incoming
                 int charsRead = decoder.GetChars(incomingBytes, 0, bytesRead, incomingChars, 0, false);
                 incoming.Append(incomingChars, 0, charsRead);
-                Console.WriteLine(incoming);
                 int givenLength = 0;
+
                if((givenLength = receiveRequestQueue.Peek().length) > 0)
                 {
                     //check if the length of the bytes read is equal to the specified length
@@ -364,7 +368,7 @@ namespace CustomNetworking
                     int indexEnd, indexStart = 0;
                     while((indexEnd =line.IndexOf('\n', indexStart)) > 0)
                     {
-                        recievedLines.Enqueue(line.Substring(indexStart, indexEnd));
+                        recievedLines.Enqueue(line.Substring(indexStart, (indexEnd - indexStart)));
 
                         indexStart = indexEnd + 1;
                     }
