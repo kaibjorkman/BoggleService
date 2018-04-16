@@ -60,7 +60,10 @@ namespace CustomNetworking
         private Socket socket;
 
         // Encoding used for sending and receiving
-        private Encoding encoding;
+        private static Encoding encoding = new System.Text.UTF8Encoding();
+
+        // Buffer size for reading incoming bytes
+        private const int BUFFER_SIZE = 1024;
 
         //struct to represent a send Request
         private struct BeginSendRequest
@@ -76,17 +79,27 @@ namespace CustomNetworking
         {
             public ReceiveCallback Callback { get; set; }
             public object Payload { get; set; }
+            public int length { get; set; }
         }
 
         //Queue's to keep track of requests
         private Queue<BeginSendRequest> sendRequestQueue;
-        private Queue<BeginRecieveRequest> recieveRequestQueue;
+        private Queue<BeginRecieveRequest> receiveRequestQueue;
+        private Queue<string> recievedLines = new Queue<string>();
 
         //byte array
-        private byte[] pendingBytes = new byte[0];
+        private byte[] pendingSendBytes = new byte[0];
+        private byte[] pendingRecieveBytes = new byte[0];
         private int pendingIndex;
 
 
+        //for processing strings
+        private Decoder decoder = encoding.GetDecoder();
+        private StringBuilder incoming;
+
+        // Buffers that will contain incoming bytes and characters
+        private byte[] incomingBytes = new byte[BUFFER_SIZE];
+        private char[] incomingChars = new char[BUFFER_SIZE];
 
 
 
@@ -102,7 +115,8 @@ namespace CustomNetworking
             encoding = e;
 
             sendRequestQueue = new Queue<BeginSendRequest>();
-            recieveRequestQueue = new Queue<BeginRecieveRequest>();
+            receiveRequestQueue = new Queue<BeginRecieveRequest>();
+            
             // TODO: Complete implementation of StringSocket
         }
 
@@ -148,18 +162,17 @@ namespace CustomNetworking
         /// </summary>
         public void BeginSend(String s, SendCallback callback, object payload)
         {
-            lock(sendRequestQueue)
+            lock (sendRequestQueue)
             {
-                
                 BeginSendRequest request = new BeginSendRequest();
                 request.Text = s;
                 request.Payload = payload;
                 request.Callback = callback;
                 sendRequestQueue.Enqueue(request);
 
-                if(sendRequestQueue.Count == 1)
+                if (sendRequestQueue.Count == 1 )
                 {
-                    this.ProcessSendQueue();
+                    ProcessSendQueue();
                 }
             }
         }
@@ -169,14 +182,16 @@ namespace CustomNetworking
         /// </summary>
         private void ProcessSendQueue()
         {
-            while(sendRequestQueue.Count > 0)
+            while (sendRequestQueue.Count > 0)
             {
-                pendingBytes = encoding.GetBytes(sendRequestQueue.Peek().Text);
+                pendingSendBytes = encoding.GetBytes(sendRequestQueue.Peek().Text);
                 
-                if(pendingBytes.Length > 0)
+                if(pendingSendBytes.Length > 0)
                 {
-                    socket.BeginSend(pendingBytes, pendingIndex, pendingBytes.Length - pendingIndex, SocketFlags.None, SendBytes, null);
+                    
+                    socket.BeginSend(pendingSendBytes, pendingIndex, pendingSendBytes.Length - pendingIndex, SocketFlags.None, SendBytes, null);
                     break;
+                    
                 }
                 
             }
@@ -185,24 +200,33 @@ namespace CustomNetworking
         private void SendBytes(IAsyncResult result)
         {
             int bytesSent = socket.EndSend(result);
-            if(bytesSent == 0)
+
+            pendingIndex += bytesSent;
+
+            if (bytesSent == 0)
             {
                 lock (sendRequestQueue)
                 {
-                    BeginSendRequest req = sendRequestQueue.Peek();
-                    req.Callback(false, req.Payload);
+                    BeginSendRequest req = sendRequestQueue.Dequeue();
+                    ThreadPool.QueueUserWorkItem(x => req.Callback(false, req.Payload));
+                    ProcessSendQueue();
+                   
                 }
             }
             
-            pendingIndex += bytesSent;
+            
                 
             //check if all bytes have been sent
-            if(pendingIndex == pendingBytes.Length)
+            if(pendingIndex == pendingSendBytes.Length)
             {
                 lock(sendRequestQueue)
                 {
                     BeginSendRequest req = sendRequestQueue.Dequeue();
-                    req.Callback(true, req.Payload);
+                    ThreadPool.QueueUserWorkItem(x => req.Callback(true, req.Payload));
+
+                    pendingIndex = 0;//reset the index
+                    
+                    ProcessSendQueue();
                 }
                 
 
@@ -210,9 +234,8 @@ namespace CustomNetworking
 
             else
             {
-                    //send it again becuase not all bytes were sent
-                    socket.BeginSend(pendingBytes, pendingIndex, pendingBytes.Length - pendingIndex, SocketFlags.None, SendBytes, null);
-                
+                //send it again becuase not all bytes were sent
+                socket.BeginSend(pendingSendBytes, pendingIndex, pendingSendBytes.Length - pendingIndex, SocketFlags.None, SendBytes, null);
             }
         }
 
@@ -256,9 +279,102 @@ namespace CustomNetworking
         /// </summary>
         public void BeginReceive(ReceiveCallback callback, object payload, int length = 0)
         {
-            // TODO: Implement BeginReceive
+            lock (receiveRequestQueue)
+            {
+
+                BeginRecieveRequest request = new BeginRecieveRequest();
+                request.Payload = payload;
+                request.Callback = callback;
+                request.length = length;
+                receiveRequestQueue.Enqueue(request);
+
+                if (receiveRequestQueue.Count == 1)
+                {
+                    ProcessRecieveQueue();
+                }
+            }
         }
 
+         /// <summary>
+        /// Proccess the request in the queue and decode bytes and try to send to socket
+        /// </summary>
+        private void ProcessRecieveQueue()
+        {
+            if (receiveRequestQueue.Count > 0 && recievedLines.Count == 1)
+            {
+                lock (receiveRequestQueue)
+                {
+                    BeginRecieveRequest req = receiveRequestQueue.Dequeue();
+                    string recievedLine = recievedLines.Dequeue();
+                    ThreadPool.QueueUserWorkItem(x => req.Callback(recievedLine, req.Payload));
+                }
+            }
+            if (receiveRequestQueue.Count > 0)
+            {
+              
+                    socket.BeginReceive(pendingRecieveBytes, 0, pendingRecieveBytes.Length, SocketFlags.None, RecieveBytes, null);
+                
+            }
+        }
+
+        private void RecieveBytes(IAsyncResult result)
+        {
+            // Figure out how many bytes have come in
+            int bytesRead = socket.EndReceive(result);
+
+            // If no bytes were received, it means the client closed its side of the socket.
+            // Report that to the console and close our socket.
+            if (bytesRead == 0)
+            {
+                BeginRecieveRequest req = receiveRequestQueue.Dequeue();
+                ThreadPool.QueueUserWorkItem(x => req.Callback(null, req.Payload));
+                socket.Close();
+            }
+
+            // Otherwise, decode and display the incoming bytes.  Then request more bytes.
+            else
+            {
+                // Convert the bytes into characters and appending to incoming
+                int charsRead = decoder.GetChars(incomingBytes, 0, bytesRead, incomingChars, 0, false);
+                incoming.Append(incomingChars, 0, charsRead);
+                Console.WriteLine(incoming);
+                int givenLength = 0;
+               if((givenLength = receiveRequestQueue.Peek().length) > 0)
+                {
+                    //check if the length of the bytes read is equal to the specified length
+                    if(incomingBytes.Length >= givenLength)
+                    {
+                        //trim down to specified size
+                        string line = incoming.ToString(0, givenLength);
+                        recievedLines.Enqueue(line);
+
+                        ProcessRecieveQueue();
+
+                    }
+
+                    else
+                    {
+                        //get more data
+                        ProcessRecieveQueue();
+                    }
+                }
+                else
+                {
+                    string line = incoming.ToString();
+                    int indexEnd, indexStart = 0;
+                    while((indexEnd =line.IndexOf('\n', indexStart)) > 0)
+                    {
+                        recievedLines.Enqueue(line.Substring(indexStart, indexEnd));
+
+                        indexStart = indexEnd + 1;
+                    }
+
+                    ProcessRecieveQueue();
+                }
+               
+            }
+
+        }
         /// <summary>
         /// Frees resources associated with this StringSocket.
         /// </summary>

@@ -261,12 +261,12 @@ namespace GradingTester
 
                 try
                 {
-                    foreach (char c in "Hello/n")
+                    foreach (char c in "Hello\n")
                     {
                         sender.BeginSend(c.ToString(), (s, p) => { }, null);
                     }
                     receiver.BeginReceive((s, p) => { line = s; mre.Set(); }, null);
-                    mre.WaitOne();
+                    mre.WaitOne(); 
                     Assert.AreEqual("Hello", line);
                 }
                 finally
