@@ -301,20 +301,23 @@ namespace CustomNetworking
         {
             lock (receiveRequestQueue)
             {
-                if (receiveRequestQueue.Count > 0 && recievedLines.Count == 1)
-                {
+                
+                    while (receiveRequestQueue.Count > 0 && recievedLines.Count > 0)
+                    {
 
-                    BeginRecieveRequest req = receiveRequestQueue.Dequeue();
-                    string recievedLine = recievedLines.Dequeue();
-                    ThreadPool.QueueUserWorkItem(x => req.Callback(recievedLine, req.Payload));
+                        BeginRecieveRequest req = receiveRequestQueue.Dequeue();
+                        string recievedLine = recievedLines.Dequeue();
+                        ThreadPool.QueueUserWorkItem(x => req.Callback(recievedLine, req.Payload));
+                        incoming = new StringBuilder();
 
-                }
-                if (receiveRequestQueue.Count > 0)
-                {
+                    }
+                    if(receiveRequestQueue.Count > 0)
+                    {
 
-                    socket.BeginReceive(incomingBytes, 0, incomingBytes.Length, SocketFlags.None, RecieveBytes, null);
+                        socket.BeginReceive(incomingBytes, 0, incomingBytes.Length, SocketFlags.None, RecieveBytes, null);
 
-                }
+                    }
+                
             }
         }
 
@@ -329,8 +332,13 @@ namespace CustomNetworking
             {
                 lock (receiveRequestQueue)
                 {
-                    BeginRecieveRequest req = receiveRequestQueue.Dequeue();
-                    ThreadPool.QueueUserWorkItem(x => req.Callback(null, req.Payload));
+                    if(receiveRequestQueue.Count > 0)
+                    {
+                        BeginRecieveRequest req = receiveRequestQueue.Dequeue();
+                        incoming = new StringBuilder();
+                        ThreadPool.QueueUserWorkItem(x => req.Callback(null, req.Payload));
+                        
+                    }
                     socket.Close();
                 }
             }
